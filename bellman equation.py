@@ -265,7 +265,8 @@ def draw_grid(n, forbidden, targets, PI, V):
     plt.show()
 
 
-
+def iterative_solution_state_value_from_bellman():
+    P_PI = [[]]
 
 
 
@@ -285,7 +286,39 @@ V = [
     [16, 17, 18, 19, 20],
     [21, 22, 23, 24, 25]
 ]
-draw_grid(n=5, forbidden=forbiddens, targets=targets, PI=PI, V=V)
+
+n_test = 2
+PI_test = [
+    ['down', 'down'],
+    ['right', None]
+]
+
+def get_P_PI_and_r_PI(n=n_test, PI=PI_test):
+    P_PI = np.zeros((n**2, n**2)) # P_PI \in R^{n*n}
+
+
+    for i in range(n):
+        for j in range(n):
+            action = PI[i][j]
+            if action is None:
+                P_PI[i][j] = 1 
+            
+
+            print(P_PI[i][j], end=' ')
+        print('')
+    
+get_P_PI_and_r_PI()
+
+
+
+
+
+
+
+
+
+
+# draw_grid(n=5, forbidden=forbiddens, targets=targets, PI=PI, V=V)
 
 
 # forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
