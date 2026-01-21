@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.patches import Rectangle
 from matplotlib.animation import FuncAnimation
 
 # =========================
@@ -14,6 +15,16 @@ from matplotlib.animation import FuncAnimation
 def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+
+    bar_bg = Rectangle((0.2, 0.93), 0.6, 0.02,
+                   transform=fig.transFigure,
+                   facecolor="lightgray")
+    bar_fg = Rectangle((0.2, 0.93), 0.0, 0.02,
+                    transform=fig.transFigure,
+                    facecolor="green")
+
+    fig.patches.extend([bar_bg, bar_fg])
+
 
     color_map = {
         "forbidden": "#F0BB1E",
@@ -92,6 +103,11 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
 
         artists = []
 
+        # 更新进度条
+        progress = (frame + 1) / len(V_list)
+        bar_fg.set_width(0.6 * progress)
+        artists.append(bar_fg)
+
         for x in range(1, n+1): # x 轴
             for y in range(1, n+1): # y 轴
                 # 转换为PI和V矩阵的行列索引
@@ -146,6 +162,7 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
         ax[k].set_yticks([i+1 for i in range(n)]) # 控制y轴刻度位置
         ax[k].set_yticklabels([str(n - i) for i in range(n)]) # 控制y轴刻度标签
         ax[k].set_aspect("equal")
+
 
 
     ani = FuncAnimation(
@@ -265,8 +282,120 @@ def draw_grid(n, forbidden, targets, PI, V):
     plt.show()
 
 
-def iterative_solution_state_value_from_bellman():
-    P_PI = [[]]
+# 根据策略PI构建状态转移概率矩阵P_PI， 
+# PI: 策略矩阵，n x n 大小，每个元素为 'up' | 'down' | 'left' | 'right' | None
+# P_PI: 共n*n种策略，故状态转移概率矩阵大小为 (n*n) x (n*n)
+def get_P_PI_from_PI(PI):
+    if len(PI) < 1:
+        raise ValueError("PI must be a non-empty matrix")
+    
+    n = len(PI) ** 2 # 状态数量 n*n
+    P_PI = np.zeros((n, n)) 
+
+    for i in range(len(PI)): # 行
+        for j in range(len(PI[0])):  # 列
+            #第 i * len(PI) + j 个状态， 即P_PI中的第 i * n + j 行
+            col = raw = i * len(PI) + j
+            action = PI[i][j]
+            if action is None:
+                pass
+            elif action == 'right':
+                raw += 1 
+            elif action == 'left':
+                raw -= 1
+            elif action == 'up':
+                raw -= len(PI) 
+            elif action == 'down':
+                raw += len(PI) 
+            else:
+                raise ValueError("Invalid action in PI")
+            
+            P_PI[col][raw] = 1
+
+    return np.array(P_PI)
+
+
+# 根据策略PI构建奖励向量r_PI，
+# PI: 策略矩阵，n x n 大小，每个元素为 'up' | 'down' | 'left' | 'right' | None
+# r_PI: 共n*n种策略，故奖励向量大小为 n*n
+# 注意 forbiddens 和 targets 中的坐标是从 (1,1) 开始计数的
+def get_r_PI_from_PI(PI, forbiddens, targets):
+    if len(PI) < 1:
+        raise ValueError("PI must be a non-empty matrix")
+    
+    n = len(PI) ** 2 # 状态数量 n*n
+    r_PI = np.zeros(n) 
+
+    # 根据当前状态和动作，判断下一个状态。
+    # if next_state in targets: reward = 1 else reward = 0
+    # if next_state in forbiddens: reward = -1 else reward = 0
+    # else reward = 0
+    for i in range(len(PI)): # i 代表 y 轴
+        for j in range(len(PI[0])): # j 代表 x 轴
+            # 第 i * len(PI) + j 个状态， 即r_PI中的第 i * n + j 个元素
+            idx = i * len(PI) + j
+            action = PI[i][j]
+            next_i, next_j = i, j
+            if action is None:
+                pass
+            elif action == 'right':
+                next_j += 1 if next_j + 1 < len(PI[0]) else 0       
+            elif action == 'left':
+                next_j -= 1 if next_j - 1 >= 0 else 0
+            elif action == 'up':
+                next_i -= 1 if next_i - 1 >= 0 else 0
+            elif action == 'down':
+                next_i += 1 if next_i + 1 < len(PI) else 0
+            else:
+                raise ValueError("Invalid action in PI")
+
+            next_state = (next_j + 1, next_i + 1) # 转换为从 (1,1) 开始计数的坐标
+            if next_state in targets:
+                r_PI[idx] = 1
+            elif next_state in forbiddens:
+                r_PI[idx] = -1
+            else:
+                r_PI[idx] = 0
+
+    return np.array(r_PI)
+
+# get_P_PI_from_PI(PI=PI)
+# get_r_PI_from_PI(PI=PI, forbiddens=forbiddens, targets=targets)
+
+
+# 给定策略PI, 环境forbidden area, target area, 和 迭代求解次数T, 折扣因子gamma
+# 返回状态价值函数v
+def iterative_solution_state_value_from_bellman(PI, forbiddens, targets, T, gamma=0.9):
+    v = np.zeros(len(PI) * len(PI)) # 初始化状态价值函数向量 v, 等于state数量，即 n*n
+    P_PI = get_P_PI_from_PI(PI=PI) # 根据策略PI构建状态转移概率矩阵P_PI
+    r_PI = get_r_PI_from_PI(PI=PI, forbiddens=forbiddens, targets=targets) # 根据策略PI构建奖励向量r_PI
+
+    V_list = []
+    PI_list = []
+    for _ in range(T):
+        v = r_PI + gamma * P_PI.dot(v)
+        V_list.append(v.reshape(len(PI), len(PI)).copy())
+        PI_list.append(PI)
+
+    # for i in range(len(PI)):
+    #     for j in range(len(PI)):
+    #         print(f"{v[i*len(PI)+j]:.1f}", end=' ')
+    #     print()
+
+    # 可视化结果（静态）
+    # draw_grid(n=len(PI), forbidden=forbiddens, targets=targets, PI=PI, V=v.reshape(len(PI), len(PI)))
+
+    # 可视化结果（动态）
+    draw_grid_animation(
+        n=len(PI),
+        forbidden=forbiddens,
+        targets=targets,
+        PI_list=PI_list,
+        V_list=V_list,
+        interval=100
+    )
+
+    return v
 
 
 
@@ -279,46 +408,9 @@ PI = [
     ['up', 'right', None, 'left', 'down'],
     ['up', 'right', 'up', 'left', 'left']
 ]
-V = [
-    [1, 2, 3, 4, 5],
-    [6, 7, 8, 9, 10],
-    [11, 12, 13, 14, 15],
-    [16, 17, 18, 19, 20],
-    [21, 22, 23, 24, 25]
-]
 
-n_test = 2
-PI_test = [
-    ['down', 'down'],
-    ['right', None]
-]
+iterative_solution_state_value_from_bellman(PI=PI, forbiddens=forbiddens, targets=targets, T=100, gamma=0.9)
 
-def get_P_PI_and_r_PI(n=n_test, PI=PI_test):
-    P_PI = np.zeros((n**2, n**2)) # P_PI \in R^{n*n}
-
-
-    for i in range(n):
-        for j in range(n):
-            action = PI[i][j]
-            if action is None:
-                P_PI[i][j] = 1 
-            
-
-            print(P_PI[i][j], end=' ')
-        print('')
-    
-get_P_PI_and_r_PI()
-
-
-
-
-
-
-
-
-
-
-# draw_grid(n=5, forbidden=forbiddens, targets=targets, PI=PI, V=V)
 
 
 # forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
