@@ -402,65 +402,65 @@ def iterative_solution_state_value_from_bellman(PI, forbiddens, targets, T, gamm
     return v
 
 
+if __name__ == "__main__":
+    forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
+    targets = {(3, 4)}
+    # PI = [
+    #     ['right', 'right', 'right', 'down', 'down'],
+    #     ['up', 'up', 'right', 'down', 'down'],
+    #     ['up', 'left', 'down', 'right', 'down'],
+    #     ['up', 'right', None, 'left', 'down'],
+    #     ['up', 'right', 'up', 'left', 'left']
+    # ]
 
-forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
-targets = {(3, 4)}
-# PI = [
-#     ['right', 'right', 'right', 'down', 'down'],
-#     ['up', 'up', 'right', 'down', 'down'],
-#     ['up', 'left', 'down', 'right', 'down'],
-#     ['up', 'right', None, 'left', 'down'],
-#     ['up', 'right', 'up', 'left', 'left']
-# ]
+    PI = [
+        ['right', 'right', 'right', 'right', 'right'],
+        ['right', 'right', 'right', 'right', 'right'],
+        ['right', 'right', 'right', 'right', 'right'],
+        ['right', 'right', 'right', 'right', 'right'],
+        ['right', 'right', 'right', 'right', 'right']
+    ]
 
-PI = [
-    ['right', 'right', 'right', 'right', 'right'],
-    ['right', 'right', 'right', 'right', 'right'],
-    ['right', 'right', 'right', 'right', 'right'],
-    ['right', 'right', 'right', 'right', 'right'],
-    ['right', 'right', 'right', 'right', 'right']
-]
-
-# PI = [
-#     ['right', 'left', 'left', 'up', 'up'],
-#     ['down', None, 'right', 'down', 'right'],
-#     ['left', 'right', 'down', 'left', None],
-#     [None, 'down', 'up', 'up', 'right'],
-#     [None, 'right', None, 'right', None]
-# ]
+    # PI = [
+    #     ['right', 'left', 'left', 'up', 'up'],
+    #     ['down', None, 'right', 'down', 'right'],
+    #     ['left', 'right', 'down', 'left', None],
+    #     [None, 'down', 'up', 'up', 'right'],
+    #     [None, 'right', None, 'right', None]
+    # ]
 
 
-iterative_solution_state_value_from_bellman(PI=PI, forbiddens=forbiddens, targets=targets, T=100, gamma=0.9)
+    iterative_solution_state_value_from_bellman(PI=PI, forbiddens=forbiddens, targets=targets, T=100, gamma=0.9)
 
-# r_PI_case1 = get_r_PI_from_PI(PI, forbiddens, targets)
-# for i in range(len(PI)):
-#     for j in range(len(PI)):
-#         print(r_PI_case1[i*len(PI)+j], end=' ')
-#     print()
+    # r_PI_case1 = get_r_PI_from_PI(PI, forbiddens, targets)
+    # for i in range(len(PI)):
+    #     for j in range(len(PI)):
+    #         print(r_PI_case1[i*len(PI)+j], end=' ')
+    #     print()
 
-# P_PI = get_P_PI_from_PI(PI=PI)
-# for i in range(len(P_PI)):
-#     for j in range(len(P_PI)):
-#         print(f"{P_PI[i][j]:.0f}", end=', ')
-#     print()
+    # P_PI = get_P_PI_from_PI(PI=PI)
+    # for i in range(len(P_PI)):
+    #     for j in range(len(P_PI)):
+    #         print(f"{P_PI[i][j]:.0f}", end=', ')
+    #     print()
 
-# forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
-# targets = {(3, 4)}
-# n = 5
-# PI_list = []
-# V_list = []
-# actions = ['right', 'down', 'left', 'up']
-# for t in range(3):
-#     PI = [[actions[(i + j + t) % 4] for j in range(n)] for i in range(n)]
-#     V  = np.random.rand(n, n) * (t + 1)
-#     PI_list.append(PI)
-#     V_list.append(V)
+    # forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
+    # targets = {(3, 4)}
+    # n = 5
+    # PI_list = []
+    # V_list = []
+    # actions = ['right', 'down', 'left', 'up']
+    # for t in range(3):
+    #     PI = [[actions[(i + j + t) % 4] for j in range(n)] for i in range(n)]
+    #     V  = np.random.rand(n, n) * (t + 1)
+    #     PI_list.append(PI)
+    #     V_list.append(V)
 
-# draw_grid_animation(
-#     n=5,
-#     forbidden=forbiddens,
-#     targets=targets,
-#     PI_list=PI_list,
-#     V_list=V_list,
-#     interval=1000
-# )
+    # draw_grid_animation(
+    #     n=5,
+    #     forbidden=forbiddens,
+    #     targets=targets,
+    #     PI_list=PI_list,
+    #     V_list=V_list,
+    #     interval=1000
+    # )
