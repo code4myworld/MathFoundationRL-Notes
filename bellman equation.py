@@ -58,18 +58,6 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
                     linewidth=1
                 )
                 ax[k].add_patch(rect)
-    
-             # 左子图：targets 中的格子画圆圈
-            if (x, y) in targets:
-                circle = patches.Circle(
-                    (x, n - y + 1),
-                    radius=0.1,
-                    edgecolor="black",
-                    facecolor="none",
-                    linewidth=2
-                )
-                ax[0].add_patch(circle)
-            
             
     
     # =======================
@@ -120,7 +108,7 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
 
                 # 左子图：遍历PI元组矩阵，画箭头
                 action = PI[i][j]
-                if action in ["up", "down", "left", "right"]:
+                if action in ["up", "down", "left", "right", None]:
                     dx, dy = 0, 0
                     if action == "up":
                         dy = 0.4
@@ -130,6 +118,17 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
                         dx = -0.4
                     elif action == "right":
                         dx = 0.4
+                    elif action is None:
+                        # 画圆圈表示无动作
+                        circle = patches.Circle(
+                            (x, n - y + 1),
+                            radius=0.1,
+                            edgecolor="black",
+                            facecolor="none",
+                            linewidth=2
+                        )
+                        ax[0].add_patch(circle)
+                        artists.append(circle)
 
                     arr = ax[0].arrow(
                         x, n - y + 1,
@@ -222,7 +221,7 @@ def draw_grid(n, forbidden, targets, PI, V):
             i, j = y - 1, x - 1 # 转换为PI和V矩阵的行列索引 
             # 左子图：遍历PI元组矩阵，画箭头 
             action = PI[i][j] 
-            if action in ["up", "down", "left", "right"]: 
+            if action in ["up", "down", "left", "right", None]: 
                 dx, dy = 0, 0 
                 if action == "up": 
                     dy = 0.4 
@@ -232,7 +231,17 @@ def draw_grid(n, forbidden, targets, PI, V):
                     dx = -0.4 
                 elif action == "right": 
                     dx = 0.4 
-                
+                elif action is None:
+                    # 画圆圈表示无动作
+                    circle = patches.Circle( 
+                        (x, n - y + 1), 
+                        radius=0.1, 
+                        edgecolor="black", 
+                        facecolor="none", 
+                        linewidth=2 
+                    )
+                    ax[0].add_patch(circle) 
+
                 ax[0].arrow( 
                     x, n - y + 1, 
                     dx, dy, 
@@ -242,18 +251,7 @@ def draw_grid(n, forbidden, targets, PI, V):
                     ec="black", 
                     length_includes_head=True 
                 ) 
-                
-            # 左子图：targets 中的格子画圆圈 
-            if (x, y) in targets: 
-                circle = patches.Circle( 
-                    (x, n - y + 1), 
-                    radius=0.1, 
-                    edgecolor="black", 
-                    facecolor="none", 
-                    linewidth=2 
-                )
-                ax[0].add_patch(circle) 
-                
+
             # 右子图：填价值
             value = V[i][j] 
             ax[1].text( 
@@ -295,21 +293,24 @@ def get_P_PI_from_PI(PI):
     for i in range(len(PI)): # 行
         for j in range(len(PI[0])):  # 列
             #第 i * len(PI) + j 个状态， 即P_PI中的第 i * n + j 行
-            col = raw = i * len(PI) + j
+            # col = raw = i * len(PI) + j
             action = PI[i][j]
+            next_i, next_j = i, j
             if action is None:
                 pass
             elif action == 'right':
-                raw += 1 
+                next_j += 1 if next_j + 1 < len(PI[0]) else 0
             elif action == 'left':
-                raw -= 1
+                next_j -= 1 if next_j - 1 >= 0 else 0
             elif action == 'up':
-                raw -= len(PI) 
+                next_i -= 1 if next_i - 1 >= 0 else 0
             elif action == 'down':
-                raw += len(PI) 
+                next_i += 1 if next_i + 1 < len(PI) else 0
             else:
                 raise ValueError("Invalid action in PI")
             
+            col = i * len(PI) + j
+            raw = next_i * len(PI) + next_j
             P_PI[col][raw] = 1
 
     return np.array(P_PI)
@@ -329,6 +330,7 @@ def get_r_PI_from_PI(PI, forbiddens, targets):
     # 根据当前状态和动作，判断下一个状态。
     # if next_state in targets: reward = 1 else reward = 0
     # if next_state in forbiddens: reward = -1 else reward = 0
+    # if next_state is out of boundary: reward = -1
     # else reward = 0
     for i in range(len(PI)): # i 代表 y 轴
         for j in range(len(PI[0])): # j 代表 x 轴
@@ -339,13 +341,13 @@ def get_r_PI_from_PI(PI, forbiddens, targets):
             if action is None:
                 pass
             elif action == 'right':
-                next_j += 1 if next_j + 1 < len(PI[0]) else 0       
+                next_j += 1        
             elif action == 'left':
-                next_j -= 1 if next_j - 1 >= 0 else 0
+                next_j -= 1 
             elif action == 'up':
-                next_i -= 1 if next_i - 1 >= 0 else 0
+                next_i -= 1 
             elif action == 'down':
-                next_i += 1 if next_i + 1 < len(PI) else 0
+                next_i += 1 
             else:
                 raise ValueError("Invalid action in PI")
 
@@ -353,6 +355,8 @@ def get_r_PI_from_PI(PI, forbiddens, targets):
             if next_state in targets:
                 r_PI[idx] = 1
             elif next_state in forbiddens:
+                r_PI[idx] = -1
+            elif next_i < 0 or next_i >= len(PI) or next_j < 0 or next_j >= len(PI[0]):
                 r_PI[idx] = -1
             else:
                 r_PI[idx] = 0
@@ -401,17 +405,44 @@ def iterative_solution_state_value_from_bellman(PI, forbiddens, targets, T, gamm
 
 forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
 targets = {(3, 4)}
+# PI = [
+#     ['right', 'right', 'right', 'down', 'down'],
+#     ['up', 'up', 'right', 'down', 'down'],
+#     ['up', 'left', 'down', 'right', 'down'],
+#     ['up', 'right', None, 'left', 'down'],
+#     ['up', 'right', 'up', 'left', 'left']
+# ]
+
 PI = [
-    ['right', 'right', 'right', 'down', 'down'],
-    ['up', 'up', 'right', 'down', 'down'],
-    ['up', 'left', 'down', 'right', 'down'],
-    ['up', 'right', None, 'left', 'down'],
-    ['up', 'right', 'up', 'left', 'left']
+    ['right', 'right', 'right', 'right', 'right'],
+    ['right', 'right', 'right', 'right', 'right'],
+    ['right', 'right', 'right', 'right', 'right'],
+    ['right', 'right', 'right', 'right', 'right'],
+    ['right', 'right', 'right', 'right', 'right']
 ]
+
+# PI = [
+#     ['right', 'left', 'left', 'up', 'up'],
+#     ['down', None, 'right', 'down', 'right'],
+#     ['left', 'right', 'down', 'left', None],
+#     [None, 'down', 'up', 'up', 'right'],
+#     [None, 'right', None, 'right', None]
+# ]
+
 
 iterative_solution_state_value_from_bellman(PI=PI, forbiddens=forbiddens, targets=targets, T=100, gamma=0.9)
 
+# r_PI_case1 = get_r_PI_from_PI(PI, forbiddens, targets)
+# for i in range(len(PI)):
+#     for j in range(len(PI)):
+#         print(r_PI_case1[i*len(PI)+j], end=' ')
+#     print()
 
+# P_PI = get_P_PI_from_PI(PI=PI)
+# for i in range(len(P_PI)):
+#     for j in range(len(P_PI)):
+#         print(f"{P_PI[i][j]:.0f}", end=', ')
+#     print()
 
 # forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
 # targets = {(3, 4)}
