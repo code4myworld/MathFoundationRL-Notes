@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, FancyArrowPatch
 from matplotlib.animation import FuncAnimation
 
 # =========================
@@ -158,6 +158,7 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
         ax[k].xaxis.set_ticks_position('none') 
         ax[k].yaxis.set_ticks_position('none') 
         # 坐标轴标签
+        ax[k].set_xticks([i+1 for i in range(n)]) # 控制x轴刻度位置
         ax[k].set_yticks([i+1 for i in range(n)]) # 控制y轴刻度位置
         ax[k].set_yticklabels([str(n - i) for i in range(n)]) # 控制y轴刻度标签
         ax[k].set_aspect("equal")
@@ -249,7 +250,7 @@ def draw_grid(n, forbidden, targets, PI, V):
                     head_length=0.1, 
                     fc="black", 
                     ec="black", 
-                    length_includes_head=True 
+                    length_includes_head=True
                 ) 
 
             # 右子图：填价值
@@ -271,6 +272,7 @@ def draw_grid(n, forbidden, targets, PI, V):
         ax[k].xaxis.set_ticks_position('none') 
         ax[k].yaxis.set_ticks_position('none') 
         # 坐标轴标签 
+        ax[k].set_xticks([i+1 for i in range(n)]) 
         ax[k].set_yticks([i+1 for i in range(n)]) 
         # 控制y轴刻度位置 
         ax[k].set_yticklabels([str(n - i) for i in range(n)]) 
@@ -387,24 +389,35 @@ def iterative_solution_state_value_from_bellman(PI, forbiddens, targets, T, gamm
     #     print()
 
     # 可视化结果（静态）
-    # draw_grid(n=len(PI), forbidden=forbiddens, targets=targets, PI=PI, V=v.reshape(len(PI), len(PI)))
+    draw_grid(n=len(PI), forbidden=forbiddens, targets=targets, PI=PI, V=v.reshape(len(PI), len(PI)))
 
     # 可视化结果（动态）
-    draw_grid_animation(
-        n=len(PI),
-        forbidden=forbiddens,
-        targets=targets,
-        PI_list=PI_list,
-        V_list=V_list,
-        interval=100
-    )
+    # draw_grid_animation(
+    #     n=len(PI),
+    #     forbidden=forbiddens,
+    #     targets=targets,
+    #     PI_list=PI_list,
+    #     V_list=V_list,
+    #     interval=100
+    # )
 
     return v
 
 
 if __name__ == "__main__":
-    forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
-    targets = {(3, 4)}
+
+    forbiddens_ex1 = {(2, 1)}
+    targets_ex1 = {(2, 2)}
+    PI_ex1 = [
+        ['right', 'down'],
+        ['right', None]
+    ]
+    
+    iterative_solution_state_value_from_bellman(PI_ex1, forbiddens_ex1, targets_ex1, T=100, gamma=0.9)
+
+
+    # forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
+    # targets = {(3, 4)}
     # PI = [
     #     ['right', 'right', 'right', 'down', 'down'],
     #     ['up', 'up', 'right', 'down', 'down'],
@@ -413,13 +426,13 @@ if __name__ == "__main__":
     #     ['up', 'right', 'up', 'left', 'left']
     # ]
 
-    PI = [
-        ['right', 'right', 'right', 'right', 'right'],
-        ['right', 'right', 'right', 'right', 'right'],
-        ['right', 'right', 'right', 'right', 'right'],
-        ['right', 'right', 'right', 'right', 'right'],
-        ['right', 'right', 'right', 'right', 'right']
-    ]
+    # PI = [
+    #     ['right', 'right', 'right', 'right', 'right'],
+    #     ['right', 'right', 'right', 'right', 'right'],
+    #     ['right', 'right', 'right', 'right', 'right'],
+    #     ['right', 'right', 'right', 'right', 'right'],
+    #     ['right', 'right', 'right', 'right', 'right']
+    # ]
 
     # PI = [
     #     ['right', 'left', 'left', 'up', 'up'],
@@ -430,7 +443,7 @@ if __name__ == "__main__":
     # ]
 
 
-    iterative_solution_state_value_from_bellman(PI=PI, forbiddens=forbiddens, targets=targets, T=100, gamma=0.9)
+    # iterative_solution_state_value_from_bellman(PI=PI, forbiddens=forbiddens, targets=targets, T=100, gamma=0.9)
 
     # r_PI_case1 = get_r_PI_from_PI(PI, forbiddens, targets)
     # for i in range(len(PI)):
