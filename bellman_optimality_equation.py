@@ -1,4 +1,5 @@
 import numpy as np
+from bellman_equation import draw_grid, draw_grid_animation
 
 ActionSpace = ['up', 'right', 'down', 'left', None]
 
@@ -82,13 +83,13 @@ def iterative_solution_BOE(n,forbiddens, targets, T, A, gamma=0.9):
 
             pi_star[i][j] = A[best_a]
 
-    return pi_star, v.reshape((n, n)), r
+    return pi_star, v.reshape((n, n))
 
 if __name__ == "__main__":
     forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
     targets = {(3, 4)}
-    pi_star, v, r = iterative_solution_BOE(n=5, forbiddens=forbiddens, targets=targets, T=100, A=ActionSpace, gamma=0)
+    pi_star, v = iterative_solution_BOE(n=5, forbiddens=forbiddens, targets=targets, T=100, A=ActionSpace, gamma=0.9)
 
-    print(pi_star)
+    draw_grid(n=5, forbidden=forbiddens, targets=targets, PI=pi_star, V=v)
     # print(v)
     # print(r)
