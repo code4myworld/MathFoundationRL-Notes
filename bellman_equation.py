@@ -83,7 +83,7 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
             values[i][j] = t
     
     # =======================
-    # update函数：更新箭头和价值文本
+    # update函数：更新箭头、圆圈和价值文本
     # =======================
     def update(frame):
         PI = PI_list[frame]
@@ -106,9 +106,23 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
                     arrows[i][j] = None
                 
 
-                # 左子图：遍历PI元组矩阵，画箭头
+                # 左子图：遍历PI元组矩阵，重新画
                 action = PI[i][j]
-                if action in ["up", "down", "left", "right", None]:
+
+                if action not in ["up", "down", "left", "right", None]:
+                    raise ValueError("Invalid action in PI")
+                if action is None:
+                    # 画圆圈
+                    obj = patches.Circle(
+                            (x, n - y + 1),
+                            radius=0.1,
+                            edgecolor="black",
+                            facecolor="none",
+                            linewidth=2
+                        )
+                    ax[0].add_patch(obj)
+                else: 
+                    # 画箭头
                     dx, dy = 0, 0
                     if action == "up":
                         dy = 0.4
@@ -118,19 +132,8 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
                         dx = -0.4
                     elif action == "right":
                         dx = 0.4
-                    elif action is None:
-                        # 画圆圈表示无动作
-                        circle = patches.Circle(
-                            (x, n - y + 1),
-                            radius=0.1,
-                            edgecolor="black",
-                            facecolor="none",
-                            linewidth=2
-                        )
-                        ax[0].add_patch(circle)
-                        artists.append(circle)
 
-                    arr = ax[0].arrow(
+                    obj = ax[0].arrow(
                         x, n - y + 1,
                         dx, dy,
                         head_width=0.1,
@@ -139,8 +142,9 @@ def draw_grid_animation(n, forbidden, targets, PI_list, V_list, interval=1000):
                         ec="black",
                         length_includes_head=True
                     )
-                    arrows[i][j] = arr
-                    artists.append(arr)
+
+                arrows[i][j] = obj
+                artists.append(obj)
                 
     
                 # 右子图：填价值
