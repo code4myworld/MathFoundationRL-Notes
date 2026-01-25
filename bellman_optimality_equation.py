@@ -60,36 +60,53 @@ def iterative_solution_BOE(n,forbiddens, targets, T, A, gamma=0.9):
                 s_next = next_i * n + next_j
                 p[idx][s][s_next] = 1.0
 
+    v_list = [] # 用于存储每次迭代的状态价值函数v，便于动画展示
+    piStar_list = [] # 用于存储每次迭代的最优策略pi*，便于动画展示
 
     # 迭代更新状态价值函数v
     for _ in range(T):
         q = np.zeros((len(A), n*n)) # 初始化动作价值函数q[a][s]
+        piStar = np.zeros(n*n, dtype=object) # 初始化最优策略pi*[s]
+
         for a in range(len(A)):
             q[a] = r[a] + gamma * np.dot(p[a], v)
         v = np.max(q, axis=0)
 
+        for s in range(n*n):
+            max_a = np.max(q[:, s])
+            best_a = np.random.choice(np.where(q[:, s] == max_a)[0])
+            piStar[s] = A[best_a]
+        
+        # best_a = np.random.choice(np.where(q == v))
+        # piStar = A[best_a]
+
+        v_list.append(v.reshape((n, n)))
+        piStar_list.append(piStar.reshape((n, n)))
+
+
     # 根据最终的状态价值函数v，计算最优策略pi*
     # pi*(s) = argmax_a [ r(s,a) + gamma * sum_{s'} p(s'|s,a) v(s') ]
-    pi_star = np.zeros((n, n), dtype=object)
-    for i in range(n):
-        for j in range(n):
-            s = i * n + j # 状态编号
-            q_s = np.zeros(len(A))
-            for a in range(len(A)):
-                q_s[a] = r[a][s] + gamma * np.dot(p[a][s], v)
+    # pi_star = np.zeros((n, n), dtype=object)
+    # for i in range(n):
+    #     for j in range(n):
+    #         s = i * n + j # 状态编号
+    #         q_s = np.zeros(len(A))
+    #         for a in range(len(A)):
+    #             q_s[a] = r[a][s] + gamma * np.dot(p[a][s], v)
             
-            max_a = np.max(q_s)
-            best_a = np.random.choice(np.where(q_s == max_a)[0])
+    #         max_a = np.max(q_s)
+    #         best_a = np.random.choice(np.where(q_s == max_a)[0])
 
-            pi_star[i][j] = A[best_a]
-
-    return pi_star, v.reshape((n, n))
+    #         pi_star[i][j] = A[best_a]
+    
+    return piStar_list, v_list
 
 if __name__ == "__main__":
     forbiddens = {(2, 2), (2, 4), (2, 5), (3, 2), (3, 3), (4, 4)}
     targets = {(3, 4)}
-    pi_star, v = iterative_solution_BOE(n=5, forbiddens=forbiddens, targets=targets, T=100, A=ActionSpace, gamma=0.9)
-
-    draw_grid(n=5, forbidden=forbiddens, targets=targets, PI=pi_star, V=v)
+    piStar_list, v_list = iterative_solution_BOE(n=5, forbiddens=forbiddens, targets=targets, T=100, A=ActionSpace, gamma=0.9)
+    draw_grid_animation(n=5, forbidden=forbiddens, targets=targets, PI_list=piStar_list, V_list=v_list, interval=300)
+    
+    # draw_grid(n=5, forbidden=forbiddens, targets=targets, PI=piStar_list[-1], V=v_list[-1])
     # print(v)
     # print(r)
