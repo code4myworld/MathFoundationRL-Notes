@@ -3,7 +3,7 @@
 Github链接：https://github.com/MathFoundationRL/Book-Mathematical-Foundation-of-Reinforcement-Learning
 
 **Contents:**  
-![BookMap](BookMap.png)
+![BookMap](Readme_Images/BookMap.png)
 
 **各章节笔记和代码**👇
 | Chapter | Notes | Code |
